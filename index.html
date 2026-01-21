@@ -1,207 +1,152 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Class 12 PCM Mock Test</title>
+<title>Dictionary App with Hindi & Voice</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
-body{font-family:Arial,sans-serif;background:#f2f2f2;margin:0}
-.box{background:#fff;padding:20px;border-radius:10px;max-width:900px;margin:20px auto;box-shadow:0 0 10px rgba(0,0,0,0.2)}
-h2,h3{text-align:center}
-input,button{width:100%;padding:10px;margin:8px 0;font-size:16px}
-button{background:#4CAF50;color:#fff;border:none;border-radius:5px;cursor:pointer}
-button:hover{background:#45a049}
-.timer{text-align:right;color:red;font-size:18px}
-.question{margin:15px 0}
-.correct{color:green}
-.wrong{color:red}
-.footer{text-align:center;margin-top:20px;color:gray;font-size:14px}
-.heart {position:fixed;bottom:0;font-size:24px;animation:fly 4s linear infinite;}
-@keyframes fly {0% {transform:translateY(0);opacity:1}100% {transform:translateY(-800px);opacity:0}}
+body{
+    font-family: Arial;
+    background:#020617;
+    color:white;
+    text-align:center;
+    padding:20px;
+}
+.box{
+    background:#0f172a;
+    padding:20px;
+    border-radius:12px;
+    max-width:450px;
+    margin:auto;
+}
+input{
+    width:90%;
+    padding:12px;
+    font-size:16px;
+    margin:8px 0;
+    border-radius:8px;
+    border:none;
+}
+button{
+    padding:10px 20px;
+    font-size:15px;
+    border-radius:8px;
+    border:none;
+    background:#22c55e;
+    cursor:pointer;
+    margin:5px;
+}
+#logout{
+    background:#ef4444;
+    color:white;
+}
+#result{
+    margin-top:15px;
+    text-align:left;
+}
 </style>
 </head>
+
 <body>
 
 <!-- LOGIN -->
 <div class="box" id="loginBox">
-<h2>🔐 Login</h2>
-<input id="user" placeholder="Username">
-<input id="pass" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
-<p id="loginMsg"></p>
+    <h2>🔐 Login</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <br>
+    <button onclick="login()">Login</button>
+    <p id="loginMsg"></p>
 </div>
 
-<!-- STUDENT INFO -->
-<div class="box" id="studentBox" style="display:none">
-<h2>🧑‍🎓 Student Details</h2>
-<input id="studentName" placeholder="Student Name (अनिवार्य)">
-<button onclick="startTest()">Start Mock Test</button>
-<p>Attempt No: <b id="attemptNo"></b></p>
-</div>
+<!-- APP -->
+<div class="box" id="appBox" style="display:none;">
+    <h2>📘 Dictionary App</h2>
 
-<!-- TEST -->
-<div class="box" id="testBox" style="display:none">
-<div class="timer">⏱️ समय: <span id="time">60:00</span></div>
-<h2>Class 12 PCM Mock Test</h2>
-<form id="quiz"></form>
-<button onclick="submitTest()">Submit Test</button>
-</div>
+    <input type="text" id="word" placeholder="Enter English word">
+    <br>
+    <button onclick="searchMeaning()">Search</button>
+    <button onclick="speakMeaning()">🔊 Voice</button>
+    <button id="logout" onclick="logout()">Logout</button>
 
-<!-- RESULT -->
-<div class="box" id="resultBox" style="display:none">
-<h2>📊 Result</h2>
-<p id="score"></p>
-<div id="details"></div>
-<button onclick="downloadPDF()">PDF Download</button>
-<button onclick="downloadExcel()">Excel Download</button>
-</div>
-
-<div class="footer">
-Created by <b>Amit Kumar Singh</b>
+    <div id="result"></div>
 </div>
 
 <script>
-const USER="Meera Singh";
-const PASS="7309277213";
-let student="", attempt=localStorage.getItem("attempt")||0;
+// AUTO LOGIN
+if(localStorage.getItem("loggedIn")==="yes"){
+    showApp();
+}
 
-// Login function
 function login(){
-if(user.value===USER && pass.value===PASS){
-loginBox.style.display="none";
-studentBox.style.display="block";
-attempt++;
-localStorage.setItem("attempt",attempt);
-attemptNo.innerText=attempt;
-}else{
-loginMsg.innerHTML="❌ गलत Username या Password";
-}
-}
-
-// Questions Array (NCERT Example Questions Hindi)
-let questions=[
-// PHYSICS 1-20
-{q:"वैद्युत आवेश की SI इकाई क्या है?",o:["कूलॉम्ब","वोल्ट","एम्पियर","ओम"],a:0},
-{q:"सतत चालक में स्थिर वैद्युत विभव का सूत्र क्या है?",o:["V=IR","Q=CV","E=F/q","V=Q/R"],a:1},
-{q:"विद्युत धारा का SI मात्रक क्या है?",o:["वोल्ट","एम्पियर","ओम","कूलॉम्ब"],a:1},
-{q:"चुंबकीय क्षेत्र की दिशा पता करने के लिए कौन सा नियम प्रयोग होता है?",o:["फ्लेमिंग","राइट हैंड","बायोट-सवर","लेनज़"],a:1},
-{q:"विद्युत चुम्बकीय प्रेरण किसे कहते हैं?",o:["धारा पैदा करना","धारा का प्रतिबंध","चुंबकत्व","विद्युत क्षेत्र में शक्ति"],a:0},
-{q:"AC का अर्थ क्या है?",o:["Alternating Current","Actual Current","Applied Charge","None"],a:0},
-{q:"विद्युत चुम्बकीय तरंगें किस गति से चलती हैं?",o:["c","v=IR","g","v=λf"],a:0},
-{q:"प्रकाशिकी में अपवर्तन का नियम क्या है?",o:["sin i/sin r=constant","F=ma","V=IR","Q=CV"],a:0},
-{q:"द्रव्य की द्वैत प्रकृति किससे प्रमाणित होती है?",o:["कण और तरंग","ऊर्जा और द्रव्य","द्रव्य और शक्ति","मात्रा और ऊर्जा"],a:0},
-{q:"परमाणु के नाभिक में कौन पाया जाता है?",o:["प्रोटॉन और न्यूट्रॉन","इलेक्ट्रॉन","फोटॉन","क्वार्क"],a:0},
-{q:"अर्धचालक में इलेक्ट्रॉन कैसे कार्य करता है?",o:["डोपिंग से","हवा से","चालकता से","गैस से"],a:0},
-{q:"संचार तंत्र में ट्रांसमीटर क्या करता है?",o:["सिग्नल प्रसारित करना","सिग्नल रिसीव करना","डेटा स्टोर करना","सिग्नल बदलना"],a:0},
-{q:"स्थिर वैद्युत विभव ऊर्जा किससे संबंधित है?",o:["Potential Energy","Kinetic Energy","Voltage","Charge"],a:0},
-{q:"धारा द्वारा चुंबकीय क्षेत्र पर क्या प्रभाव पड़ता है?",o:["धारा की मात्रा","वोल्टेज","प्रतिरोध","पृथ्वी का चुंबकत्व"],a:0},
-{q:"संचार में रिसीवर का कार्य क्या है?",o:["सिग्नल रिसीव करना","डेटा स्टोर करना","सिग्नल बदलना","सिग्नल पैदा करना"],a:0},
-{q:"फोटॉन किस प्रकार की ऊर्जा है?",o:["प्रकाश ऊर्जा","यांत्रिक ऊर्जा","ध्वनि ऊर्जा","गर्मी"],a:0},
-{q:"परमाणु में इलेक्ट्रॉन ऊर्जा स्तर कैसे निर्धारित होते हैं?",o:["क्वांटम संख्या","द्रव्य","विद्युत आवेश","संचार प्रणाली"],a:0},
-{q:"धारा किसे कहते हैं?",o:["चालकों में इलेक्ट्रॉनों का प्रवाह","प्रोटॉन का प्रवाह","न्यूट्रॉन का प्रवाह","चुंबकत्व"],a:0},
-{q:"प्रत्यावर्ती धारा की इकाई क्या है?",o:["Hz","Ampere","Volt","Ohm"],a:0},
-{q:"संचार तंत्र में ट्रांसमीटर किसे कहते हैं?",o:["सिग्नल भेजने वाला यंत्र","सिग्नल रिसीवर","डेटा स्टोर","माध्यम"],a:0},
-
-// CHEMISTRY 21-40
-{q:"ठोस अवस्था में कण कैसे व्यवस्थित रहते हैं?",o:["सघन","छितरित","अव्यवस्थित","तरल"],a:0},
-{q:"विलयन में मुख्य घटक कौन है?",o:["घोलक","घुलक","दोनों बराबर","कोई नहीं"],a:0},
-{q:"विद्युत रसायन में इलेक्ट्रोलाइट क्या है?",o:["विद्युत प्रवाहक पदार्थ","गैस","तापीय पदार्थ","द्रव"],a:0},
-{q:"रासायनिक गतिकी किसे मापती है?",o:["अभिक्रिया की दर","द्रव्य का घनत्व","वोल्टेज","धारा"],a:0},
-{q:"पृष्ठ रसायन किसे अध्ययन करती है?",o:["सतह पर क्रिया","आयन","अणु","धारा"],a:0},
-{q:"p-block तत्व कौनसे हैं?",o:["मुख्य समूह 13-18","d-block","f-block","कोई नहीं"],a:0},
-{q:"d-block तत्व की विशेषता?",o:["स्थानांतरण धातु","मुख्य समूह","लैंथनाइड","एनोड"],a:0},
-{q:"f-block तत्व कौनसे हैं?",o:["लैंथनाइड और एक्टिनाइड","मुख्य समूह","स्थानांतरण धातु","गैस"],a:0},
-{q:"उपसहसंयोजक यौगिक में क्या पाया जाता है?",o:["लिगैंड्स","धातु","प्रोटॉन","विद्युत आवेश"],a:0},
-{q:"हैलोऐल्केन में मुख्य तत्व?",o:["हैलोजन","ऑक्सीजन","हाइड्रोजन","कार्बन"],a:0},
-{q:"ऐल्कोहॉल का functional group?",o:["-OH","-COOH","-NH2","-CHO"],a:0},
-{q:"ऐल्डिहाइड में functional group?",o:["-CHO","-OH","-COOH","-NH2"],a:0},
-{q:"कीटोन में functional group?",o:["-CO-","-OH","-CHO","-NH2"],a:0},
-{q:"कार्बोक्सिलिक अम्ल का group?",o:["-COOH","-OH","-CHO","-NH2"],a:0},
-{q:"ऐमीन में functional group?",o:["-NH2","-OH","-COOH","-CHO"],a:0},
-{q:"जैव अणु का उदाहरण?",o:["प्रोटीन","गैस","लिक्विड","आयन"],a:0},
-{q:"बहुलक किसे कहते हैं?",o:["पॉलिमर","एकल अणु","अयोनिक पदार्थ","संयोजन"],a:0},
-{q:"दैनिक जीवन में रसायन का प्रयोग?",o:["साबुन, डिटर्जेंट, दवा","केवल प्रयोगशाला","अन्य कोई नहीं","पानी"],a:0},
-
-// MATHS 41-60
-{q:"संबंध एवं फलन का उदाहरण?",o:["y=x^2","x+y=2","a+b=c","sinθ"],a:0},
-{q:"sin^2θ + cos^2θ = ?",o:["1","0","-1","2"],a:0},
-{q:"सांतत्य (Continuity) किससे मापा जाता है?",o:["limit","derivative","integral","sum"],a:0},
-{q:"अवकलज (Derivative) का अनुप्रयोग?",o:["स्पीड, ताकत, प्रवाह","द्रव्य","विद्युत","गैस"],a:0},
-{q:"समाकलन (Integration) किसे कहते हैं?",o:["कर्व के नीचे क्षेत्रफल","समीकरण","फलन","त्रिकोणमिति"],a:0},
-{q:"समाकलन के अनुप्रयोग?",o:["Volume, Area","Limit","Derivative","Integral"],a:0},
-{q:"अवकल समीकरण का उपयोग?",o:["Growth, Decay, Motion","Matrix","Vector","Integral"],a:0},
-{q:"सदिश गुणा किसे कहते हैं?",o:["Dot Product","Cross Product","Addition","Division"],a:0},
-{q:"त्रिविमीय ज्यामिति में बिंदु कैसे दर्शाया जाता है?",o:["(x,y,z)","(x,y)","(x)","z"],a:0},
-{q:"रैखिक प्रोग्रामन में constraints क्या हैं?",o:["Limitations","Derivative","Integrals","Matrices"],a:0},
-{q:"मैट्रिक्स में डिटर्मिनेंट क्या दर्शाता है?",o:["सांख्यिक गुण","Area","Length","Volume"],a:0},
-{q:"सैट्स में A∪B का अर्थ?",o:["A और B का संयुक्त सेट","A का B","Intersection","Difference"],a:0},
-{q:"त्रिकोणमितीय समीकरण का हल?",o:["Trig Functions","Linear Equations","Derivative","Matrix"],a:0},
-{q:"अवकलज में दर क्या बताता है?",o:["Change Rate","Speed","Distance","Time"],a:0},
-{q:"समाकलन में अंतराल क्या है?",o:["Limits of Integration","Range","Derivative","Function"],a:0},
-{q:"सदिश बीजगणित में कौन प्रयोग होता है?",o:["Vector Addition","Number Addition","Matrix","Integral"],a:0},
-{q:"त्रिविमीय ज्यामिति में आकृति कौनसी होती है?",o:["3D Shape","2D Shape","Line","Circle"],a:0},
-{q:"रैखिक प्रोग्रामन में objective function क्या है?",o:["Maximum/Minimum Value","Derivative","Integral","Matrix"],a:0},
-{q:"Probability में संभावना किसे कहते हैं?",o:["Event Likelihood","Derivative","Integral","Sum"],a:0},
-{q:"संबंध और फलन में domain क्या है?",o:["x का मान","y का मान","z का मान","f(x)"],a:0}
-];
-
-// TIMER
-let t=3600;
-function startTimer(){let timer=setInterval(()=>{
-let m=Math.floor(t/60), s=t%60;
-time.innerHTML=`${m}:${s<10?"0"+s:s}`;
-if(t--<=0){clearInterval(timer);submitTest();}
-},1000);
+    let u=document.getElementById("username").value;
+    let p=document.getElementById("password").value;
+    if(u==="Meera Singh" && p==="7309277213"){
+        localStorage.setItem("loggedIn","yes");
+        showApp();
+    }else{
+        document.getElementById("loginMsg").innerText="❌ Wrong details";
+    }
 }
 
-// LOAD QUESTIONS
-function loadQuestions(){
-let html="";
-questions.forEach((x,i)=>{
-if(i===0) html+="<h3>⚛️ Physics</h3>";
-if(i===20) html+="<h3>🧪 Chemistry</h3>";
-if(i===40) html+="<h3>📐 Maths</h3>";
-html+=`<div class="question"><b>${i+1}. ${x.q}</b><br>${x.o.map((o,j)=>`<label><input type="radio" name="q${i}" value="${j}"> ${o}</label><br>`).join("")}</div>`;
-});
-quiz.innerHTML=html;
+function showApp(){
+    loginBox.style.display="none";
+    appBox.style.display="block";
 }
 
-// SUBMIT
-function submitTest(){
-testBox.style.display="none";
-resultBox.style.display="block";
-let score=0,html="";
-questions.forEach((x,i)=>{
-let sel=document.querySelector(`input[name="q${i}"]:checked`);
-let ans=sel?parseInt(sel.value):-1;
-if(ans===x.a){score+=1; html+=`<p class="correct">Q${i+1} ✔ सही</p>`;}
-else if(ans===-1){html+=`<p>Q${i+1} ⚪ नहीं किया</p>`;}
-else{score-=0.25; html+=`<p class="wrong">Q${i+1} ✖ गलत</p>`;}
-});
-if(score<0) score=0;
-scoreText=`Student: <b>${student}</b><br>Attempt No: <b>${attempt}</b><br>Score: <b>${score}/60</b>`;
-document.getElementById("score").innerHTML=scoreText;
-details.innerHTML=html;
-window.finalScore=score;
-if(score>=45){heartAnimation();}else if(score>=30){confetti();}
+function logout(){
+    localStorage.removeItem("loggedIn");
+    location.reload();
 }
 
-// HEART ANIMATION
-function heartAnimation(){
-for(let i=0;i<30;i++){let h=document.createElement("div");h.className="heart";h.innerHTML="❤️";h.style.left=Math.random()*100+"%";document.body.appendChild(h);setTimeout(()=>h.remove(),4000);}
+let speakText="";
+
+function searchMeaning(){
+    let word=document.getElementById("word").value;
+    let result=document.getElementById("result");
+
+    if(word.trim()==""){
+        alert("Enter a word");
+        return;
+    }
+
+    result.innerHTML="Searching...";
+
+    // English meaning
+    fetch("https://api.dictionaryapi.dev/api/v2/entries/en/"+word)
+    .then(res=>res.json())
+    .then(data=>{
+        let eng=data[0].meanings[0].definitions[0].definition;
+
+        // Hindi meaning
+        fetch("https://api.mymemory.translated.net/get?q="+eng+"&langpair=en|hi")
+        .then(res=>res.json())
+        .then(hindi=>{
+            let hi=hindi.responseData.translatedText;
+
+            speakText="English meaning: "+eng+". Hindi meaning: "+hi;
+
+            result.innerHTML=`
+            <b>English Meaning:</b><br>${eng}<br><br>
+            <b>Hindi Meaning:</b><br>${hi}
+            `;
+        });
+    })
+    .catch(()=>{
+        result.innerHTML="❌ Word not found";
+    });
 }
 
-// PDF
-function downloadPDF(){const {jsPDF}=window.jspdf;let pdf=new jsPDF();pdf.text("Class 12 PCM Mock Test Result",10,10);pdf.text(`Name: ${student}`,10,20);pdf.text(`Attempt: ${attempt}`,10,30);pdf.text(`Score: ${finalScore}/60`,10,40);pdf.text("Created by Amit Kumar Singh",10,55);pdf.save("result.pdf");}
-
-// EXCEL
-function downloadExcel(){let wb=XLSX.utils.book_new();let ws=XLSX.utils.aoa_to_sheet([["Name","Attempt","Score"],[student,attempt,finalScore+"/60"]]);XLSX.utils.book_append_sheet(wb,ws,"Result");XLSX.writeFile(wb,"result.xlsx");}
-
-// START TEST
-function startTest(){if(studentName.value===""){alert("Student Name लिखना अनिवार्य है");return;}student=studentName.value;studentBox.style.display="none";testBox.style.display="block";loadQuestions();startTimer();}
+function speakMeaning(){
+    if(speakText==""){
+        alert("Search a word first");
+        return;
+    }
+    let msg=new SpeechSynthesisUtterance(speakText);
+    msg.lang="en-IN";
+    speechSynthesis.speak(msg);
+}
 </script>
+
 </body>
-                                                        </html>
+      </html>
