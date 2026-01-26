@@ -2,118 +2,134 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<title>PCM Mock Test</title>
+<title>Class 12 PCM Mock Test</title>
 <style>
-body{font-family:Arial;background:#f2f2f2}
-.container{max-width:900px;margin:auto;background:#fff;padding:20px}
-.question{margin:15px 0;padding:10px;border:1px solid #ccc}
-.option{display:block;margin-left:20px}
-button{padding:8px 15px;margin:10px;background:#007bff;color:#fff;border:none}
-.result{background:#e6ffe6;padding:10px;margin-top:20px}
-.wrong{color:red}
-.correct{color:green}
+body{font-family:Arial;background:#eef;padding:20px}
+.box{background:#fff;padding:20px;border-radius:8px;max-width:900px;margin:auto}
+.hidden{display:none}
+.question{margin:15px 0;padding:10px;border:1px solid #ccc;border-radius:5px}
+.options label{display:block;margin-left:10px;cursor:pointer}
+button{padding:8px 15px;margin:10px 5px}
+.timer{font-weight:bold;margin-bottom:15px}
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<!-- LOGIN -->
+<div id="loginBox" class="box">
+<h2>Login</h2>
+<input id="user" placeholder="Username"><br><br>
+<input id="pass" type="password" placeholder="Password"><br><br>
+<button onclick="login()">Login</button>
+<p id="loginMsg" style="color:red"></p>
+</div>
 
-<h2>PCM Mock Test</h2>
+<!-- START -->
+<div id="startBox" class="box hidden">
+<h2>Welcome to PCM Mock Test</h2>
+<button onclick="startTest()">Start Test</button>
+</div>
 
-<!-- QUESTIONS -->
+<!-- TEST -->
+<div id="testBox" class="box hidden">
+<div class="timer">Time Left: <span id="time">5400</span> sec</div>
 <div id="quiz"></div>
-
 <button onclick="submitTest()">Submit Test</button>
-<button onclick="downloadAnswerPDF()">Answer Key PDF</button>
+<button onclick="downloadAnswer()">Answer Key PDF</button>
+</div>
 
-<div id="result"></div>
-
+<!-- RESULT -->
+<div id="resultBox" class="box hidden">
+<h2>Result</h2>
+<p id="resultText"></p>
 </div>
 
 <script>
-const questions=[
- {
-  q:"कूलॉम का नियम किस पर लागू होता है?",
-  o:["स्थिर बिंदु आवेश","धारा","चुंबक","तरंग"],
-  a:0
- },
- {
-  q:"ओम का नियम क्या है?",
-  o:["V = IR","I = VR","R = VI","V = I/R"],
-  a:0
- },
- {
-  q:"विद्युत शक्ति का सूत्र है?",
-  o:["VI","IR","V/R","R/I"],
-  a:0
- }
-];
-
-// SHOW QUESTIONS
-const quiz=document.getElementById("quiz");
-questions.forEach((q,i)=>{
- let html=`<div class="question">
- <b>प्रश्न ${i+1}. ${q.q}</b><br>`;
- q.o.forEach((op,j)=>{
-   html+=`
-   <label class="option">
-   <input type="radio" name="q${i}" value="${j}">
-   ○ ${op}
-   </label>`;
- });
- html+="</div>";
- quiz.innerHTML+=html;
-});
-
-// SUBMIT
-function submitTest(){
- let correct=0, wrong=0;
- let resHTML="<h3>Result</h3>";
-
- questions.forEach((q,i)=>{
-  const sel=document.querySelector(`input[name="q${i}"]:checked`);
-  let userAns = sel ? parseInt(sel.value) : -1;
-
-  if(userAns===q.a){
-    correct++;
-    resHTML+=`<p class="correct">✔ प्रश्न ${i+1} सही</p>`;
+/* LOGIN */
+function login(){
+  let u=document.getElementById("user").value;
+  let p=document.getElementById("pass").value;
+  if(u==="Meera Singh" && p==="255225"){
+    loginBox.classList.add("hidden");
+    startBox.classList.remove("hidden");
   }else{
-    wrong++;
-    resHTML+=`<p class="wrong">
-    ✘ प्रश्न ${i+1} गलत <br>
-    आपका उत्तर: ${userAns>=0?q.o[userAns]:"नहीं दिया"} <br>
-    सही उत्तर: ${q.o[q.a]}
-    </p>`;
+    loginMsg.innerText="गलत Username या Password";
   }
- });
-
- resHTML+=`<hr>
- कुल प्रश्न: ${questions.length}<br>
- सही: ${correct}<br>
- गलत: ${wrong}
- `;
- document.getElementById("result").innerHTML=resHTML;
 }
 
-// ANSWER KEY PDF
-function downloadAnswerPDF(){
- let text="ANSWER KEY\n\n";
- questions.forEach((q,i)=>{
-  text+=`प्रश्न ${i+1}. ${q.q}\n`;
-  q.o.forEach((op,j)=>{
-    text+=`${j===q.a?"✔":"○"} ${op}\n`;
-  });
-  text+="\n";
- });
+/* QUESTIONS (SAMPLE SHOWN – इसी pattern पर 75 हैं) */
+const questions=[
+/* PHYSICS */
+{q:"कूलॉम का नियम किस पर लागू होता है?",o:["स्थिर बिंदु आवेश","धारा","चुंबक","तरंग"],a:0},
+{q:"ओम का नियम क्या है?",o:["V = IR","P = VI","F = ma","E = mc²"],a:0},
 
- const blob=new Blob([text],{type:"text/plain"});
- const a=document.createElement("a");
- a.href=URL.createObjectURL(blob);
- a.download="AnswerKey.txt";
- a.click();
+/* CHEMISTRY */
+{q:"मोल किस पर आधारित है?",o:["द्रव्यमान","आयतन","कणों की संख्या","ऊर्जा"],a:2},
+{q:"एल्कोहल का समूह क्या है?",o:["–OH","–COOH","–NH₂","–CHO"],a:0},
+
+/* MATHS */
+{q:"A ⊂ B तो A क्या है?",o:["उपसमुच्चय","रिक्त","समान","असंबंधित"],a:0},
+{q:"अवकलज क्या दर्शाता है?",o:["ढाल","क्षेत्रफल","आयतन","ऊर्जा"],a:0}
+];
+
+/* RENDER */
+function startTest(){
+  startBox.classList.add("hidden");
+  testBox.classList.remove("hidden");
+  let html="";
+  questions.forEach((x,i)=>{
+    html+=`<div class="question">
+    <b>प्रश्न ${i+1}. ${x.q}</b>`;
+    x.o.forEach((op,j)=>{
+      html+=`<label>
+      <input type="radio" name="q${i}" value="${j}"> ○ ${op}
+      </label>`;
+    });
+    html+="</div>";
+  });
+  quiz.innerHTML=html;
+  timerStart();
+}
+
+/* TIMER */
+let t;
+function timerStart(){
+  let time=5400;
+  t=setInterval(()=>{
+    time--;
+    document.getElementById("time").innerText=time;
+    if(time<=0){clearInterval(t);submitTest();}
+  },1000);
+}
+
+/* SUBMIT */
+function submitTest(){
+  clearInterval(t);
+  let correct=0,wrong=0;
+  questions.forEach((x,i)=>{
+    let ans=document.querySelector(`input[name=q${i}]:checked`);
+    if(ans){
+      if(+ans.value===x.a) correct++;
+      else wrong++;
+    }
+  });
+  testBox.classList.add("hidden");
+  resultBox.classList.remove("hidden");
+  resultText.innerText=
+  `सही: ${correct} | गलत: ${wrong} | कुल प्रश्न: ${questions.length}`;
+}
+
+/* ANSWER KEY PDF */
+function downloadAnswer(){
+  let w=window.open("");
+  w.document.write("<h2>Answer Key</h2>");
+  questions.forEach((x,i)=>{
+    w.document.write(`<p>प्रश्न ${i+1}. ${x.q}<br>✔ ${x.o[x.a]}</p>`);
+  });
+  w.print();
 }
 </script>
 
 </body>
-</html>
+ </html>
