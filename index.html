@@ -2,47 +2,32 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Shivam Milk Dairy Login</title>
+<title>Shivam Milk Dairy</title>
 
-<!-- jsPDF -->
+<!-- PDF libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f2f2f2}
+input,select,button{width:100%;padding:6px;margin-bottom:8px}
+button{background:green;color:white;border:none}
 
 /* Login */
-#loginBox{
-  height:100vh;display:flex;justify-content:center;align-items:center;
-}
-.login{
-  background:#fff;padding:20px;width:300px;
-  box-shadow:0 0 10px #aaa
-}
-input,select{width:100%;padding:6px;margin-bottom:8px}
-button{width:100%;padding:8px;background:green;color:white;border:none}
+#loginBox{height:100vh;display:flex;align-items:center;justify-content:center}
+.login{background:#fff;padding:20px;width:300px;box-shadow:0 0 10px #aaa}
 
 /* Splash */
-#splash{
-  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
-  background:#1b5e20;color:white;align-items:center;overflow:hidden
-}
-.train-text{
-  white-space:nowrap;font-size:28px;font-weight:bold;
-  animation:train 8s linear infinite;
-}
-@keyframes train{
-  0%{transform:translateX(100%)}
-  100%{transform:translateX(-100%)}
-}
+#splash{display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+background:#1b5e20;color:white;align-items:center;overflow:hidden}
+.train{white-space:nowrap;font-size:26px;font-weight:bold;
+animation:move 8s linear infinite}
+@keyframes move{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
 
-/* Form */
-#mainForm{
-  display:none;background:#fff;padding:15px;
-  width:95%;max-width:1000px;margin:20px auto
-}
-table{width:100%;border-collapse:collapse;margin-top:15px}
-th,td{border:1px solid #000;padding:5px;text-align:center}
+/* Main */
+#main{display:none;background:#fff;padding:15px;max-width:1000px;margin:20px auto}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #000;padding:4px;text-align:center}
 </style>
 </head>
 
@@ -52,8 +37,16 @@ th,td{border:1px solid #000;padding:5px;text-align:center}
 <div id="loginBox">
   <div class="login">
     <h3 align="center">Login</h3>
-    <input id="user" placeholder="Username">
-    <input id="pass" type="password" placeholder="Password">
+
+    <!-- Credentials visible -->
+    <p style="font-size:13px;text-align:center;color:green">
+      Username: <b>Shivam Yadav</b><br>
+      Password: <b>277210</b>
+    </p>
+
+    <input id="user" value="Shivam Yadav">
+    <input id="pass" type="password" value="277210">
+
     <button onclick="login()">Login</button>
     <p id="msg" style="color:red;text-align:center"></p>
   </div>
@@ -61,21 +54,21 @@ th,td{border:1px solid #000;padding:5px;text-align:center}
 
 <!-- SPLASH -->
 <div id="splash">
-  <div class="train-text">
-    🚆 Welcome to the Shivam Milk Dairy Product – For Everyone 🚆
+  <div class="train">
+     Welcome to the Shivam Milk Dairy Product – For Everyone 
   </div>
 </div>
 
-<!-- FORM -->
-<div id="mainForm">
+<!-- MAIN FORM -->
+<div id="main">
 <h2 align="center">Milk Dairy Entry Form</h2>
 
 <input type="date" id="date">
 <input id="time" readonly>
 
 <input placeholder="Village Name" id="village">
-<input placeholder="Doodh Dene Wale ka Naam" id="giver">
-<input placeholder="Doodh Lene Wale ka Naam" id="receiver">
+<input placeholder="Doodh Dene Wala" id="giver">
+<input placeholder="Doodh Lene Wala" id="receiver">
 <input placeholder="Mobile Number" id="mobile">
 
 <select id="type">
@@ -86,20 +79,20 @@ th,td{border:1px solid #000;padding:5px;text-align:center}
 <input type="number" step="0.1" placeholder="Quantity (Liter)" id="qty">
 <input type="number" placeholder="Rate ₹/Liter" id="rate">
 
-<input placeholder="Signature – Doodh Dene Wala" id="signGiver">
-<input placeholder="Signature – Doodh Lene Wala" id="signReceiver">
+<input placeholder="Signature (Doodh Diya)" id="signG">
+<input placeholder="Signature (Doodh Liya)" id="signR">
 
 <button onclick="saveData()">Save Entry</button>
 <button onclick="downloadPDF()">📄 Download PDF</button>
+<button onclick="sendWhatsApp()">📲 Send to WhatsApp</button>
 
 <table id="dataTable">
 <thead>
 <tr>
 <th>Date</th><th>Time</th><th>Village</th>
-<th>Doodh Diya</th><th>Doodh Liya</th>
-<th>Mobile</th><th>Milk</th>
-<th>Qty</th><th>Rate</th><th>Total</th>
-<th>Sign Diya</th><th>Sign Liya</th>
+<th>Diya</th><th>Liya</th><th>Mobile</th>
+<th>Milk</th><th>Qty</th><th>Rate</th>
+<th>Total</th><th>Sign D</th><th>Sign L</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -107,50 +100,66 @@ th,td{border:1px solid #000;padding:5px;text-align:center}
 </div>
 
 <script>
-// LOGIN CHECK
+// LOGIN (fixed)
 function login(){
-  if(user.value==="Shivam Yadav" && pass.value==="277210"){
+  let u=document.getElementById("user").value.trim();
+  let p=document.getElementById("pass").value.trim();
+
+  if(u==="Shivam Yadav" && p==="277210"){
     loginBox.style.display="none";
     splash.style.display="flex";
     setTimeout(()=>{
       splash.style.display="none";
-      mainForm.style.display="block";
+      main.style.display="block";
     },5000);
   }else{
     msg.innerText="Wrong Username or Password";
   }
 }
 
-// time
-setInterval(()=>{time.value=new Date().toLocaleTimeString();},1000);
+// TIME HH:MM:SS
+setInterval(()=>{
+  time.value=new Date().toLocaleTimeString();
+},1000);
 
-// save data
+// SAVE DATA
 function saveData(){
-let total=qty.value*rate.value;
-table.innerHTML+=`
-<tr>
-<td>${date.value}</td>
-<td>${time.value}</td>
-<td>${village.value}</td>
-<td>${giver.value}</td>
-<td>${receiver.value}</td>
-<td>${mobile.value}</td>
-<td>${type.value}</td>
-<td>${qty.value}</td>
-<td>${rate.value}</td>
-<td>${total}</td>
-<td>${signGiver.value}</td>
-<td>${signReceiver.value}</td>
-</tr>`;
+  let total=qty.value*rate.value;
+  table.innerHTML+=`
+  <tr>
+    <td>${date.value}</td>
+    <td>${time.value}</td>
+    <td>${village.value}</td>
+    <td>${giver.value}</td>
+    <td>${receiver.value}</td>
+    <td>${mobile.value}</td>
+    <td>${type.value}</td>
+    <td>${qty.value}</td>
+    <td>${rate.value}</td>
+    <td>${total}</td>
+    <td>${signG.value}</td>
+    <td>${signR.value}</td>
+  </tr>`;
 }
 
 // PDF
 function downloadPDF(){
-const { jsPDF } = window.jspdf;
-let doc=new jsPDF('l','pt','a4');
-doc.text("Shivam Milk Dairy Record",40,30);
-doc.autoTable({html:'#dataTable',startY:50});
-doc.save("Shivam_Milk_Dairy_Record.pdf");
+  const { jsPDF } = window.jspdf;
+  let doc=new jsPDF('l','pt','a4');
+  doc.text("Shivam Milk Dairy Record",40,30);
+  doc.autoTable({html:'#dataTable',startY:50});
+  doc.save("Shivam_Milk_Dairy.pdf");
+}
+
+// WHATSAPP
+function sendWhatsApp(){
+  let text="🐄 Shivam Milk Dairy Record 🐄\n\n";
+  document.querySelectorAll("#dataTable tr").forEach(r=>{
+    let line=[];
+    r.querySelectorAll("th,td").forEach(c=>line.push(c.innerText));
+    text+=line.join(" | ")+"\n";
+  });
+  window.open("https://wa.me/?text="+encodeURIComponent(text));
 }
 </script>
 
