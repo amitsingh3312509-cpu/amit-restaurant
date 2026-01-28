@@ -3,156 +3,212 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shivam Milk Dairy</title>
-
+<title>Shivam Jee Milk Dairy</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 body{margin:0;font-family:Arial;background:#eee}
-.app{max-width:430px;margin:auto;background:#fff;min-height:100vh;padding:10px}
+.app{max-width:450px;margin:auto;background:#fff;min-height:100vh;padding:10px}
 input,select,button{width:100%;padding:10px;margin:6px 0;font-size:14px}
-button{border:none;border-radius:5px;color:#fff}
+button{border:none;border-radius:6px;color:#fff;cursor:pointer}
 .green{background:green}
+.blue{background:#0b5ed7}
 .red{background:red}
-.card{background:#f1f1f1;padding:10px;margin-top:10px;border-radius:8px}
+.card{background:#f1f1f1;padding:10px;border-radius:8px;margin-top:10px}
 img{width:100%;border-radius:8px;margin-top:5px}
 table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
 th,td{border:1px solid #000;padding:4px;text-align:center}
-.totalBox{background:#e0ffe0;padding:8px;font-weight:bold;margin-top:10px}
+.hidden{display:none}
+.center{text-align:center}
 </style>
 </head>
-
 <body>
-<div class="app">
 
-<h3>🐄 Shivam Milk Dairy 🐃</h3>
+<!-- WELCOME SLIDE -->
+<div class="app" id="welcomePage">
+<h2 class="center">🌟 Welcome to Shivam Jee Milk Dairy 🌟</h2>
+<button class="green" onclick="showLogin()">Proceed to Login</button>
+</div>
 
-<h4>ग्राहक की जानकारी (एक बार)</h4>
-<input id="name" placeholder="ग्राहक का नाम">
-<input id="village" placeholder="गाँव का नाम">
+<!-- LOGIN -->
+<div class="app hidden" id="loginPage">
+<h3 class="center">🔐 Login</h3>
+<input id="loginUser" value="Shivam Yadav">
+<input id="loginPass" type="password" value="277210">
+<button class="green" onclick="login()">Login</button>
+</div>
 
-<select id="milkType">
-<option value="">दूध का प्रकार चुनें</option>
-<option value="गाय">🐄 गाय</option>
-<option value="भैंस">🐃 भैंस</option>
+<!-- MAIN APP -->
+<div class="app hidden" id="mainApp">
+
+<h3 class="center">🐄 Shivam Jee Milk Dairy 🐃</h3>
+
+<!-- ADD CUSTOMER -->
+<h4>नया ग्राहक जोड़ें</h4>
+<input id="cname" placeholder="ग्राहक का नाम">
+<input id="cvillage" placeholder="गाँव">
+<select id="cmilk">
+<option value="">दूध का प्रकार</option>
+<option>गाय</option>
+<option>भैंस</option>
 </select>
+<input type="file" id="cphoto" accept="image/*">
+<button class="green" onclick="addCustomer()">ग्राहक सेव करें</button>
 
-<label>ग्राहक का फोटो 📷</label>
-<input type="file" id="custPhoto" accept="image/*" capture="environment">
+<hr>
 
-<button class="green" onclick="saveCustomer()">ग्राहक सेव करें</button>
+<!-- SELECT CUSTOMER -->
+<h4>ग्राहक चुनें</h4>
+<select id="customerSelect" onchange="selectCustomer()"></select>
+<button class="red" onclick="deleteCustomer()">पूरा ग्राहक Delete</button>
 
-<!-- ग्राहक नीचे दिखेगा -->
 <div id="customerBox"></div>
 
 <hr>
 
-<h4>आज की दूध एंट्री</h4>
+<h4>आज की एंट्री</h4>
 <input type="date" id="date">
-<input id="qty" type="number" placeholder="दूध (लीटर)">
-<input id="rate" type="number" placeholder="रेट ₹ प्रति लीटर">
-<input id="milkTotal" readonly placeholder="दूध की कीमत">
+<input id="qty" type="number" placeholder="लीटर">
+<input id="rate" type="number" placeholder="रेट ₹/लीटर">
+<input id="total" readonly placeholder="कुल ₹">
+<input id="paid" type="number" placeholder="आज दिया ₹">
+<button class="green" onclick="saveEntry()">सेव करें</button>
 
-<input id="amount" type="number" placeholder="आज दिया पैसा">
-<input id="advance" type="number" placeholder="एडवांस">
+<div class="card" id="summary"></div>
 
-<button class="green" onclick="saveDaily()">आज की एंट्री सेव करें</button>
+<button class="blue" onclick="downloadPDF()">PDF डाउनलोड करें</button>
+<button class="blue" onclick="sendWhatsApp()">WhatsApp भेजें</button>
+<button class="red" onclick="logout()">Logout</button>
 
-<div class="totalBox">
-कुल लिया गया पैसा ₹ <span id="totalMoney">0</span>
-</div>
-
-<table id="table">
-<tr>
-<th>तारीख</th><th>लीटर</th><th>रेट</th>
-<th>दूध कीमत</th><th>दिया</th><th>एडवांस</th><th>डिलीट</th>
-</tr>
-</table>
+<table id="table"></table>
 
 </div>
 
 <script>
-let customer = JSON.parse(localStorage.getItem("customer")) || null;
-let data = JSON.parse(localStorage.getItem("dailyData")) || [];
-
-qty.oninput = rate.oninput = ()=>{
- milkTotal.value=(qty.value||0)*(rate.value||0);
-};
-
-function saveCustomer(){
- let file=custPhoto.files[0];
- if(!file){alert("फोटो लें");return;}
- let reader=new FileReader();
- reader.onload=()=>{
-  customer={
-   name:name.value,
-   village:village.value,
-   milkType:milkType.value,
-   photo:reader.result
-  };
-  localStorage.setItem("customer",JSON.stringify(customer));
-  showCustomer();
-  alert("ग्राहक सेव हो गया ✅");
- };
- reader.readAsDataURL(file);
+// WELCOME
+function showLogin(){
+ welcomePage.classList.add("hidden");
+ loginPage.classList.remove("hidden");
 }
 
-function showCustomer(){
- if(!customer)return;
- customerBox.innerHTML=`
- <div class="card">
- <b>नाम:</b> ${customer.name}<br>
- <b>गाँव:</b> ${customer.village}<br>
- <b>दूध:</b> ${customer.milkType}
- <img src="${customer.photo}">
- </div>`;
+// LOGIN
+function login(){
+ if(loginUser.value==="Shivam Yadav" && loginPass.value==="277210"){
+  localStorage.setItem("logged","yes");
+  loginPage.classList.add("hidden");
+  mainApp.classList.remove("hidden");
+ }
+}
+function logout(){
+ localStorage.removeItem("logged");
+ location.reload();
+}
+if(localStorage.getItem("logged")==="yes"){
+ welcomePage.classList.add("hidden");
+ loginPage.classList.add("hidden");
+ mainApp.classList.remove("hidden");
 }
 
-function saveDaily(){
- if(!customer){alert("पहले ग्राहक सेव करें");return;}
- let e={
-  date:date.value,
-  qty:+qty.value,
-  rate:+rate.value,
-  milkTotal:+milkTotal.value,
-  amount:+amount.value||0,
-  advance:+advance.value||0
+// DATA
+let customers = JSON.parse(localStorage.getItem("customers")) || [];
+let currentIndex=null;
+rate.oninput=qty.oninput=()=>{ total.value=(rate.value||0)*(qty.value||0); };
+
+// ADD CUSTOMER
+function addCustomer(){
+ let f=cphoto.files[0];
+ if(!f || !cname.value){ alert("सभी जानकारी भरें"); return; }
+ let r=new FileReader();
+ r.onload=()=>{
+  customers.push({name:cname.value,village:cvillage.value,milk:cmilk.value,photo:r.result,entries:[]});
+  save();
  };
- data.push(e);
- localStorage.setItem("dailyData",JSON.stringify(data));
+ r.readAsDataURL(f);
+}
+
+// SAVE TO LOCALSTORAGE
+function save(){ localStorage.setItem("customers",JSON.stringify(customers)); loadCustomerList(); }
+
+// LOAD CUSTOMER LIST
+function loadCustomerList(){
+ customerSelect.innerHTML="<option>ग्राहक चुनें</option>";
+ customers.forEach((c,i)=>{
+  let o=document.createElement("option");
+  o.value=i; o.text=c.name+" ("+c.village+")";
+  customerSelect.add(o);
+ });
+}
+
+// SELECT CUSTOMER
+function selectCustomer(){
+ currentIndex=customerSelect.value;
+ let c=customers[currentIndex];
+ customerBox.innerHTML=`<div class="card"><b>${c.name}</b><br>${c.village}<br>${c.milk}<img src="${c.photo}"></div>`;
  loadTable();
 }
 
-function loadTable(){
- table.innerHTML=`<tr>
- <th>तारीख</th><th>लीटर</th><th>रेट</th>
- <th>दूध कीमत</th><th>दिया</th><th>एडवांस</th><th>डिलीट</th>
- </tr>`;
- let total=0;
- data.forEach((d,i)=>{
-  total+=d.amount+d.advance;
-  let r=table.insertRow();
-  r.insertCell(0).innerText=d.date;
-  r.insertCell(1).innerText=d.qty;
-  r.insertCell(2).innerText="₹"+d.rate;
-  r.insertCell(3).innerText="₹"+d.milkTotal;
-  r.insertCell(4).innerText="₹"+d.amount;
-  r.insertCell(5).innerText="₹"+d.advance;
-  r.insertCell(6).innerHTML=
-   `<button class="red" onclick="del(${i})">डिलीट</button>`;
- });
- totalMoney.innerText=total;
+// SAVE ENTRY
+function saveEntry(){
+ if(currentIndex===null){alert("ग्राहक चुनें"); return;}
+ let c=customers[currentIndex];
+ c.entries.push({date:date.value,qty:+qty.value,rate:+rate.value,total:+total.value,paid:+paid.value});
+ save(); loadTable();
 }
 
-function del(i){
- if(confirm("एंट्री हटाएँ?")){
-  data.splice(i,1);
-  localStorage.setItem("dailyData",JSON.stringify(data));
-  loadTable();
+// LOAD TABLE + SUMMARY
+function loadTable(){
+ if(currentIndex===null) return;
+ let c=customers[currentIndex];
+ let t=0,p=0;
+ table.innerHTML="<tr><th>तारीख</th><th>लीटर</th><th>₹</th><th>Paid</th><th>Due</th><th>❌</th></tr>";
+ c.entries.forEach((e,i)=>{
+  t+=e.total; p+=e.paid;
+  let r=table.insertRow();
+  r.insertCell(0).innerText=e.date;
+  r.insertCell(1).innerText=e.qty;
+  r.insertCell(2).innerText=e.total;
+  r.insertCell(3).innerText=e.paid;
+  r.insertCell(4).innerText=e.total-e.paid;
+  r.insertCell(5).innerHTML=`<button class="red" onclick="delEntry(${i})">X</button>`;
+ });
+ summary.innerHTML=`<b>Total ₹:</b> ${t}<br><b>Paid ₹:</b> ${p}<br><b>Baki ₹:</b> ${t-p}`;
+}
+
+// DELETE ENTRY
+function delEntry(i){ customers[currentIndex].entries.splice(i,1); save(); loadTable(); }
+
+// DELETE CUSTOMER
+function deleteCustomer(){
+ if(currentIndex===null){alert("ग्राहक चुनें");return;}
+ if(confirm("पूरा ग्राहक हट जाएगा?")){
+  customers.splice(currentIndex,1); save();
+  customerBox.innerHTML=""; table.innerHTML=""; summary.innerHTML=""; loadCustomerList();
  }
 }
 
-showCustomer();
-loadTable();
-</script>
+// PDF
+function downloadPDF(){
+ if(currentIndex===null){alert("ग्राहक चुनें"); return;}
+ const {jsPDF}=window.jspdf; let pdf=new jsPDF(); let y=10;
+ let c=customers[currentIndex];
+ pdf.text("Shivam Jee Milk Dairy",10,y); y+=10;
+ pdf.text(`${c.name} (${c.village})`,10,y); y+=8;
+ c.entries.forEach(e=>{
+  pdf.text(`${e.date} | ${e.qty}L | ₹${e.total} | Paid ₹${e.paid} | Due ₹${e.total-e.paid}`,10,y); y+=6;
+ });
+ pdf.save(`${c.name}_Milk_Report.pdf`);
+}
 
+// WhatsApp
+function sendWhatsApp(){
+ if(currentIndex===null){alert("ग्राहक चुनें"); return;}
+ let c=customers[currentIndex]; let msg=`${c.name} (${c.village})%0A`;
+ c.entries.forEach(e=>{
+  msg+=`${e.date} ${e.qty}L ₹${e.total} Paid ₹${e.paid} Due ₹${e.total-e.paid}%0A`;
+ });
+ window.open(`https://wa.me/?text=${msg}`);
+}
+
+loadCustomerList();
+</script>
 </body>
-  </html>
+ </html>
