@@ -8,6 +8,7 @@
 
 <style>
 body{margin:0;font-family:Arial;background:#eee}
+marquee{font-size:22px;font-weight:bold;color:green;background:#fff;padding:10px}
 .app{max-width:430px;margin:auto;background:#fff;min-height:100vh;padding:10px}
 input,select,button{width:100%;padding:10px;margin:6px 0}
 button{border:none;border-radius:6px;color:#fff}
@@ -25,22 +26,21 @@ th,td{border:1px solid #000;padding:4px;text-align:center}
 
 <body>
 
-<!-- WELCOME -->
-<div class="app" id="welcome">
-<h2 class="center">🌟 Welcome to Shivam Jee Milk Dairy 🌟</h2>
-<button class="green" onclick="openLogin()">Start</button>
-</div>
+<!-- 🔴 WELCOME SCROLL -->
+<marquee behavior="scroll" direction="left">
+🌟 WELCOME TO SHIVAM JEE MILK DAIRY 🌟
+</marquee>
 
 <!-- LOGIN -->
-<div class="app hidden" id="login">
+<div class="app" id="loginBox">
 <h3 class="center">🔐 Login</h3>
 <input id="user" value="Shivam Yadav">
 <input id="pass" type="password" value="277210">
-<button class="green" onclick="doLogin()">Login</button>
+<button class="green" onclick="login()">Login</button>
 </div>
 
 <!-- MAIN APP -->
-<div class="app hidden" id="main">
+<div class="app hidden" id="mainApp">
 
 <h3 class="center">🐄 Shivam Jee Milk Dairy 🐃</h3>
 
@@ -61,7 +61,7 @@ th,td{border:1px solid #000;padding:4px;text-align:center}
 <hr>
 
 <h4>ग्राहक चुनें</h4>
-<select id="selectCustomer" onchange="loadCustomer()"></select>
+<select id="customerList" onchange="selectCustomer()"></select>
 <button class="red" onclick="deleteCustomer()">पूरा ग्राहक Delete</button>
 
 <div id="customerBox"></div>
@@ -78,7 +78,7 @@ th,td{border:1px solid #000;padding:4px;text-align:center}
 
 <div class="card" id="summary"></div>
 
-<button class="blue" onclick="makePDF()">PDF डाउनलोड</button>
+<button class="blue" onclick="downloadPDF()">PDF डाउनलोड</button>
 <button class="blue" onclick="sendWhatsApp()">WhatsApp भेजें</button>
 <button class="red" onclick="logout()">Logout</button>
 
@@ -87,25 +87,17 @@ th,td{border:1px solid #000;padding:4px;text-align:center}
 </div>
 
 <script>
-// AUTO LOGIN CHECK
+// LOGIN CHECK
 if(localStorage.getItem("login")==="yes"){
- welcome.classList.add("hidden");
- login.classList.add("hidden");
- main.classList.remove("hidden");
+ loginBox.classList.add("hidden");
+ mainApp.classList.remove("hidden");
 }
 
-// WELCOME → LOGIN
-function openLogin(){
- welcome.classList.add("hidden");
- login.classList.remove("hidden");
-}
-
-// LOGIN
-function doLogin(){
+function login(){
  if(user.value==="Shivam Yadav" && pass.value==="277210"){
   localStorage.setItem("login","yes");
-  login.classList.add("hidden");
-  main.classList.remove("hidden");
+  loginBox.classList.add("hidden");
+  mainApp.classList.remove("hidden");
  }
 }
 function logout(){
@@ -115,19 +107,22 @@ function logout(){
 
 // DATA
 let customers = JSON.parse(localStorage.getItem("customers")) || [];
-let current = null;
+let current=null;
 
-// AUTO TOTAL
-rate.oninput = liter.oninput = ()=>{
- total.value = (rate.value||0) * (liter.value||0);
+rate.oninput=liter.oninput=()=>{
+ total.value=(rate.value||0)*(liter.value||0);
 };
 
-// ADD CUSTOMER
+function saveData(){
+ localStorage.setItem("customers",JSON.stringify(customers));
+ loadCustomerList();
+}
+
 function addCustomer(){
- let f = cphoto.files[0];
- if(!cname.value || !f){ alert("सारी जानकारी भरें"); return; }
- let r = new FileReader();
- r.onload = ()=>{
+ let f=cphoto.files[0];
+ if(!cname.value||!f){alert("सभी जानकारी भरें");return;}
+ let r=new FileReader();
+ r.onload=()=>{
   customers.push({
    name:cname.value,
    village:cvillage.value,
@@ -135,38 +130,32 @@ function addCustomer(){
    photo:r.result,
    entries:[]
   });
-  save();
+  saveData();
  };
  r.readAsDataURL(f);
 }
 
-// SAVE
-function save(){
- localStorage.setItem("customers",JSON.stringify(customers));
- loadList();
-}
-
-// LOAD CUSTOMER LIST
-function loadList(){
- selectCustomer.innerHTML="<option>ग्राहक चुनें</option>";
+function loadCustomerList(){
+ customerList.innerHTML="<option>ग्राहक चुनें</option>";
  customers.forEach((c,i)=>{
   let o=document.createElement("option");
-  o.value=i; o.text=c.name+" ("+c.village+")";
-  selectCustomer.add(o);
+  o.value=i;
+  o.text=c.name+" ("+c.village+")";
+  customerList.add(o);
  });
 }
 
-// LOAD CUSTOMER
-function loadCustomer(){
- current = selectCustomer.value;
- let c = customers[current];
- customerBox.innerHTML=`<div class="card"><b>${c.name}</b><br>${c.village}<br>${c.milk}<img src="${c.photo}"></div>`;
+function selectCustomer(){
+ current=customerList.value;
+ let c=customers[current];
+ customerBox.innerHTML=
+ `<div class="card"><b>${c.name}</b><br>${c.village}<br>${c.milk}
+ <img src="${c.photo}"></div>`;
  loadTable();
 }
 
-// SAVE ENTRY
 function saveEntry(){
- let c = customers[current];
+ let c=customers[current];
  c.entries.push({
   date:date.value,
   liter:+liter.value,
@@ -174,12 +163,11 @@ function saveEntry(){
   total:+total.value,
   paid:+paid.value
  });
- save(); loadTable();
+ saveData(); loadTable();
 }
 
-// LOAD TABLE
 function loadTable(){
- let c = customers[current];
+ let c=customers[current];
  let t=0,p=0;
  table.innerHTML="<tr><th>तारीख</th><th>लीटर</th><th>₹</th><th>Paid</th><th>Due</th><th>❌</th></tr>";
  c.entries.forEach((e,i)=>{
@@ -195,35 +183,31 @@ function loadTable(){
  summary.innerHTML=`<b>Total ₹:</b> ${t}<br><b>Paid ₹:</b> ${p}<br><b>Baki ₹:</b> ${t-p}`;
 }
 
-// DELETE ENTRY
 function delEntry(i){
  customers[current].entries.splice(i,1);
- save(); loadTable();
+ saveData(); loadTable();
 }
 
-// DELETE CUSTOMER
 function deleteCustomer(){
  if(confirm("पूरा ग्राहक delete हो जाएगा")){
   customers.splice(current,1);
-  save();
+  saveData();
   customerBox.innerHTML=""; table.innerHTML=""; summary.innerHTML="";
  }
 }
 
-// PDF
-function makePDF(){
+function downloadPDF(){
  const {jsPDF}=window.jspdf;
- let pdf=new jsPDF(), y=10;
+ let pdf=new jsPDF(),y=10;
  let c=customers[current];
  pdf.text("Shivam Jee Milk Dairy",10,y); y+=10;
- pdf.text(c.name+" ("+c.village+")",10,y); y+=10;
+ pdf.text(c.name+" ("+c.village+")",10,y); y+=8;
  c.entries.forEach(e=>{
   pdf.text(`${e.date} | ₹${e.total} | Paid ₹${e.paid}`,10,y); y+=6;
  });
  pdf.save(c.name+".pdf");
 }
 
-// WHATSAPP
 function sendWhatsApp(){
  let c=customers[current];
  let msg=`${c.name}%0A`;
@@ -233,8 +217,8 @@ function sendWhatsApp(){
  window.open(`https://wa.me/?text=${msg}`);
 }
 
-loadList();
+loadCustomerList();
 </script>
 
 </body>
-</html>
+ </html>
