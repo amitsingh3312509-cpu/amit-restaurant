@@ -1,212 +1,43 @@
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shivam Jee Milk Dairy</title>
+<!-- Online Order (Email shows ordered items clearly) -->
+<div class="card">
+  <h2>🛎️ Place Your Order</h2>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <form action="https://formsubmit.co/amitsingh3312509@gmail.com" method="POST">
 
-<style>
-body{
-  font-family:Arial;
-  background:linear-gradient(to right,#a8ff78,#78ffd6);
-  padding:10px
-}
-.container{
-  background:#fff;
-  padding:15px;
-  border-radius:12px;
-  box-shadow:0 0 10px #555
-}
-h2{text-align:center;color:#0a7a2f}
-input,select,button{
-  width:100%;padding:8px;margin:5px 0;
-  border-radius:6px;border:1px solid #aaa
-}
-button{background:#0a7a2f;color:white;border:none}
-.logout{background:#d9534f}
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
-th,td{border:1px solid #000;padding:5px;text-align:center}
-th{background:#0a7a2f;color:white}
-.del{background:red}
-img{width:40px;height:40px;border-radius:50%}
-</style>
-</head>
+    <!-- FormSubmit Settings -->
+    <input type="hidden" name="_captcha" value="false">
+    <input type="hidden" name="_subject" value="🔔 New Order Received – Amit Restaurant">
+    <input type="hidden" name="_template" value="table">
 
-<body>
-<div class="container">
+    <input name="Customer Name" placeholder="Your Name" required>
+    <input name="Mobile" placeholder="Mobile Number" required>
+    <input name="Address" placeholder="Delivery Address" required>
 
-<h2>🙏 Welcome to Shivam Jee Milk Dairy 🙏</h2>
-<button class="logout" onclick="logout()">Logout</button>
+    <select name="Dish" id="dish" onchange="updatePrice()" required>
+      <option value="">Select Item</option>
+      <option value="Paneer Butter Masala - ₹180" data-price="180">Paneer Butter Masala - ₹180</option>
+      <option value="Chicken Biryani - ₹220" data-price="220">Chicken Biryani - ₹220</option>
+      <option value="Veg Chowmein - ₹120" data-price="120">Veg Chowmein - ₹120</option>
+      <option value="Butter Naan - ₹30" data-price="30">Butter Naan - ₹30</option>
+    </select>
 
-<h3>ग्राहक जोड़ें</h3>
-<input id="cname" placeholder="ग्राहक का नाम">
-<input id="village" placeholder="गांव का नाम">
-<button onclick="addCustomer()">ग्राहक सेव करें</button>
+    <input id="qty" name="Quantity" type="number" placeholder="Quantity" oninput="updatePrice()" required>
 
-<hr>
+    <input type="hidden" id="totalInput" name="Total Price">
 
-<h3>दैनिक दूध एंट्री</h3>
-<select id="customer"></select>
-<input type="date" id="date">
-<input type="number" id="liter" placeholder="दूध (लीटर)">
-<input type="number" id="rate" placeholder="₹ प्रति लीटर">
-<input type="number" id="paid" placeholder="₹ दिया गया">
+    <p>Total: <b id="total">₹0</b></p>
 
-<label>📷 फोटो (Direct Camera)</label>
-<input type="file" accept="image/*" capture="environment" id="photo">
-
-<button onclick="addEntry()">SAVE</button>
-
-<button onclick="downloadPDF()">📄 PDF</button>
-<button onclick="sendWhatsApp()">📱 WhatsApp</button>
-
-<table>
-<thead>
-<tr>
-<th>Photo</th>
-<th>नाम</th>
-<th>गांव</th>
-<th>तारीख</th>
-<th>समय</th>
-<th>दूध</th>
-<th>कुल ₹</th>
-<th>दिया</th>
-<th>बाकी</th>
-<th>Delete</th>
-</tr>
-</thead>
-<tbody id="list"></tbody>
-</table>
-
-<h3 id="summary"></h3>
-
+    <button type="submit">Confirm Order</button>
+  </form>
 </div>
 
 <script>
-let customers = JSON.parse(localStorage.getItem("customers")) || [];
-let entries = JSON.parse(localStorage.getItem("entries")) || [];
-
-function getTime(){
-  let d=new Date();
-  return d.getHours()+":"+
-         String(d.getMinutes()).padStart(2,"0")+":"+
-         String(d.getSeconds()).padStart(2,"0");
-}
-
-function addCustomer(){
-  customers.push({name:cname.value,village:village.value});
-  localStorage.setItem("customers",JSON.stringify(customers));
-  cname.value=""; village.value="";
-  loadCustomers();
-}
-
-function loadCustomers(){
-  customer.innerHTML="";
-  customers.forEach((c,i)=>{
-    customer.innerHTML+=`<option value="${i}">${c.name} - ${c.village}</option>`;
-  });
-}
-
-function addEntry(){
-  let c = customers[customer.value];
-  let file = photo.files[0];
-  if(!file){ alert("Photo zaroori hai"); return; }
-
-  let reader=new FileReader();
-  let img=new Image();
-
-  reader.onload=e=>img.src=e.target.result;
-
-  img.onload=function(){
-    let canvas=document.createElement("canvas");
-    let maxW=300;
-    let scale=maxW/img.width;
-    canvas.width=maxW;
-    canvas.height=img.height*scale;
-
-    let ctx=canvas.getContext("2d");
-    ctx.drawImage(img,0,0,canvas.width,canvas.height);
-
-    let smallPhoto=canvas.toDataURL("image/jpeg",0.6);
-
-    let total=liter.value*rate.value;
-    let due=total-paid.value;
-
-    entries.push({
-      name:c.name,
-      village:c.village,
-      date:date.value,
-      time:getTime(),
-      liter:liter.value,
-      total,
-      paid:paid.value,
-      due,
-      photo:smallPhoto
-    });
-
-    localStorage.setItem("entries",JSON.stringify(entries));
-    show();
-  };
-  reader.readAsDataURL(file);
-}
-
-function show(){
-  list.innerHTML="";
-  let totalDue=0;
-  entries.forEach((e,i)=>{
-    totalDue+=Number(e.due);
-    list.innerHTML+=`
-    <tr>
-      <td><img src="${e.photo}"></td>
-      <td>${e.name}</td>
-      <td>${e.village}</td>
-      <td>${e.date}</td>
-      <td>${e.time}</td>
-      <td>${e.liter}</td>
-      <td>${e.total}</td>
-      <td>${e.paid}</td>
-      <td>${e.due}</td>
-      <td><button class="del" onclick="del(${i})">X</button></td>
-    </tr>`;
-  });
-  summary.innerText="👉 कुल बाकी पैसा: ₹ "+totalDue;
-}
-
-function del(i){
-  entries.splice(i,1);
-  localStorage.setItem("entries",JSON.stringify(entries));
-  show();
-}
-
-function downloadPDF(){
-  const { jsPDF }=window.jspdf;
-  let pdf=new jsPDF();
-  pdf.text("Shivam Jee Milk Dairy Report",10,10);
-  let y=20;
-  entries.forEach(e=>{
-    pdf.text(`${e.name} | ${e.date} ${e.time} | ₹${e.total} | बाकी ₹${e.due}`,10,y);
-    y+=8;
-  });
-  pdf.save("milk-report.pdf");
-}
-
-function sendWhatsApp(){
-  let msg="Shivam Jee Milk Dairy%0A";
-  entries.forEach(e=>{
-    msg+=`${e.name} ${e.date} ${e.time} ₹${e.total} बाकी ₹${e.due}%0A`;
-  });
-  window.open("https://wa.me/?text="+msg);
-}
-
-function logout(){
-  alert("Logout ho gaya");
-}
-
-loadCustomers();
-show();
-</script>
-
-</body>
-  </html>
+  function updatePrice() {
+    const dish = document.getElementById("dish");
+    const price = dish.options[dish.selectedIndex]?.getAttribute("data-price") || 0;
+    const qty = document.getElementById("qty").value || 0;
+    const total = price * qty;
+    document.getElementById("total").innerText = "₹" + total;
+    document.getElementById("totalInput").value = "₹" + total;
+  }
+  </script>
