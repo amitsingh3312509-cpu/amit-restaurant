@@ -14,16 +14,19 @@ input,select,textarea,button{width:100%;padding:8px;margin:5px 0}
 button{background:#e63946;color:#fff;border:none;border-radius:6px}
 .nav{display:flex;gap:8px;flex-wrap:wrap}
 .nav button{flex:1}
-#ownerPhoto{width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #fff;cursor:pointer}
+#ownerPhoto,#qrPhoto{width:120px;height:120px;border-radius:10px;object-fit:cover;border:3px solid #fff;cursor:pointer}
 .footer{text-align:center;color:#666;margin:20px}
 .hide{display:none}
+.small{font-size:12px;color:#777}
 </style>
 </head>
 <body>
 
 <header>
-  <img id="ownerPhoto" src="https://via.placeholder.com/150" alt="Owner Photo" title="Click to change photo">
-  <input type="file" id="photoInput" accept="image/*" style="display:none">
+  <p>Owner Photo (Click to Change)</p>
+  <img id="ownerPhoto" src="https://via.placeholder.com/150" alt="Owner Photo">
+  <input type="file" id="ownerInput" accept="image/*" style="display:none">
+
   <h1>Amit Restaurant</h1>
   <marquee>🙏 Meera Jee | Ajay Singh Jee 🙏</marquee>
 </header>
@@ -52,7 +55,7 @@ button{background:#e63946;color:#fff;border:none;border-radius:6px}
     <option value="">Select Village (Bansdih, Ballia)</option>
     <option>Ajanara</option><option>Bansdih</option><option>Bari</option>
     <option>Chandpur</option><option>Dumaria</option><option>Gopalpur</option>
-    <option>Haripur</option><option>Jamui</option><option>Kharika</option>
+    <option>Chhotaki Seriya</option><option>Jamui</option><option>Chatai</option>
     <option>Lilkar</option><option>Maniyar</option><option>Narayanpur</option>
     <option>Ojha Tola</option><option>Pranpur</option><option>Rajpur</option>
     <option>Saraya</option><option>Tendua</option><option>Umarpur</option>
@@ -130,9 +133,11 @@ button{background:#e63946;color:#fff;border:none;border-radius:6px}
 
 <!-- PAYMENT -->
 <div class="card hide" id="pay">
-<h2>💳 Payment</h2>
+<h2>💳 Payment (Click QR to Change)</h2>
 <p>UPI Number: <b>9151041867</b></p>
-<img src="https://via.placeholder.com/200" alt="UPI QR (Replace image later)">
+<img id="qrPhoto" src="https://via.placeholder.com/200" alt="UPI QR">
+<input type="file" id="qrInput" accept="image/*" style="display:none">
+<p class="small">QR par click karo → gallery se apna QR photo lagao (refresh ke baad bhi rahega).</p>
 </div>
 
 </div>
@@ -161,19 +166,43 @@ function sendWhatsApp(){
 function downloadPDF(){
   window.print();
 }
-// Owner photo pick from gallery (preview only)
+
+// Owner photo save (localStorage)
 const ownerPhoto=document.getElementById("ownerPhoto");
-const photoInput=document.getElementById("photoInput");
-ownerPhoto.onclick=()=>photoInput.click();
-photoInput.onchange=function(){
+const ownerInput=document.getElementById("ownerInput");
+const savedOwner=localStorage.getItem("ownerPhoto");
+if(savedOwner){ ownerPhoto.src=savedOwner; }
+ownerPhoto.onclick=()=>ownerInput.click();
+ownerInput.onchange=function(){
   const f=this.files[0];
   if(f){
     const r=new FileReader();
-    r.onload=e=>ownerPhoto.src=e.target.result;
+    r.onload=e=>{
+      ownerPhoto.src=e.target.result;
+      localStorage.setItem("ownerPhoto", e.target.result);
+    };
+    r.readAsDataURL(f);
+  }
+};
+
+// QR photo save (localStorage)
+const qrPhoto=document.getElementById("qrPhoto");
+const qrInput=document.getElementById("qrInput");
+const savedQR=localStorage.getItem("qrPhoto");
+if(savedQR){ qrPhoto.src=savedQR; }
+qrPhoto.onclick=()=>qrInput.click();
+qrInput.onchange=function(){
+  const f=this.files[0];
+  if(f){
+    const r=new FileReader();
+    r.onload=e=>{
+      qrPhoto.src=e.target.result;
+      localStorage.setItem("qrPhoto", e.target.result);
+    };
     r.readAsDataURL(f);
   }
 };
 </script>
 
 </body>
-  </html>
+    </html>
