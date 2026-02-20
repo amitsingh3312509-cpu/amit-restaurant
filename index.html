@@ -176,7 +176,7 @@ pre{background:#fafafa;padding:10px;border-radius:6px;white-space:pre-wrap}
 <div class="card hide" id="payment">
 <h2>Online Payment</h2>
 <p><b>UPI Number:</b> 7309277213</p>
-<img src="https://i.postimg.cc/7LsLPMD6/IMG-20260202-WA0000.jpg" width="200">
+<img src="https://i.postimg.cc/wjfK4Lkt/Screenshot-20260211-233842.png Width="200>
 </div>
 
 <!-- ORDER -->
@@ -517,6 +517,173 @@ function clearAll(){
 localStorage.clear();
 alert("All Data Deleted");
 }
+</script>
+
+</body>
+  <!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>School Admission Portal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{font-family:Arial;margin:0;background:#f2f2f2;text-align:center;}
+.header{background:#004aad;color:white;padding:15px;font-size:20px;}
+.container{width:95%;max-width:450px;margin:20px auto;background:white;padding:20px;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1);}
+input,select{width:100%;padding:10px;margin:8px 0;border-radius:5px;border:1px solid #ccc;}
+button{width:100%;padding:10px;background:#004aad;color:white;border:none;border-radius:5px;margin-top:5px;cursor:pointer;}
+.step{display:none;}
+.qr{margin-top:10px;}
+</style>
+</head>
+
+<body>
+
+<div class="header">🏫 School Admission Portal</div>
+
+<div class="container">
+
+<form id="admissionForm"
+action="https://formsubmit.co/d896b06d8ff17da94daf546eda56d034"
+method="POST">
+
+<input type="hidden" name="_captcha" value="false">
+<input type="hidden" name="_subject" value="New Admission With Receipt">
+<input type="hidden" name="Receipt No" id="receiptNo">
+
+<!-- STEP 1 -->
+<div class="step" id="step1">
+<h3>Student Details</h3>
+<input type="text" name="Student Name" id="studentName" placeholder="Student Name" required>
+<input type="date" name="DOB" required>
+<select name="Class" required>
+<option value="">Select Class</option>
+<option>Nursery</option>
+<option>Class 1</option>
+<option>Class 2</option>
+<option>Class 3</option>
+</select>
+<button type="button" onclick="nextStep(2)">Next ➡</button>
+</div>
+
+<!-- STEP 2 -->
+<div class="step" id="step2">
+<h3>School & Parent</h3>
+<select name="School" required>
+<option value="">Select School</option>
+<option>Bright Future Public School</option>
+<option>Sunrise Convent School</option>
+</select>
+<input type="text" name="Parent Name" required placeholder="Parent Name">
+<input type="tel" name="Parent Mobile" required placeholder="Parent Mobile">
+<button type="button" onclick="prevStep(1)">⬅ Back</button>
+<button type="button" onclick="nextStep(3)">Next ➡</button>
+</div>
+
+<!-- STEP 3 -->
+<div class="step" id="step3">
+<h3>Admission Fee</h3>
+<select id="fee" required>
+<option value="">Select Fee</option>
+<option value="500">₹500</option>
+<option value="1000">₹1000</option>
+<option value="2000">₹2000</option>
+<option value="5000">₹5000</option>
+<option value="10000">₹10000</option>
+</select>
+
+<button type="button" onclick="generateUPI()">Pay via UPI</button>
+
+<div id="paymentSection" class="qr"></div>
+
+<input type="text" id="txn" placeholder="Enter UPI Transaction ID after payment">
+
+<button type="button" onclick="finalSubmit()">Final Submit</button>
+</div>
+
+</form>
+</div>
+
+<script>
+
+let receiptNumber="";
+
+function showStep(step){
+document.getElementById("step1").style.display="none";
+document.getElementById("step2").style.display="none";
+document.getElementById("step3").style.display="none";
+document.getElementById("step"+step).style.display="block";
+}
+
+function nextStep(step){ showStep(step); }
+function prevStep(step){ showStep(step); }
+
+function generateUPI(){
+
+let amount=document.getElementById("fee").value;
+
+if(amount==""){
+alert("Select fee first");
+return;
+}
+
+let upiID="7309277213@upi";
+let upiLink=`upi://pay?pa=${upiID}&pn=SchoolAdmission&am=${amount}&cu=INR`;
+
+let qrCode=`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiLink)}`;
+
+document.getElementById("paymentSection").innerHTML=
+"<h4>Scan & Pay ₹"+amount+"</h4>"+
+"<img src='"+qrCode+"' width='200'><br><br>"+
+"<a href='"+upiLink+"'><button>Open UPI App</button></a>";
+}
+
+function finalSubmit(){
+
+let txn=document.getElementById("txn").value;
+if(txn==""){
+alert("Enter transaction ID");
+return;
+}
+
+receiptNumber="REC"+Date.now();
+document.getElementById("receiptNo").value=receiptNumber;
+
+// Local Storage Save
+let data={
+student:document.getElementById("studentName").value,
+fee:document.getElementById("fee").value,
+txn:txn,
+receipt:receiptNumber
+};
+
+localStorage.setItem(receiptNumber,JSON.stringify(data));
+
+// Generate PDF
+generatePDF(data);
+
+// Submit form (email send)
+document.getElementById("admissionForm").submit();
+}
+
+function generatePDF(data){
+
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF();
+
+doc.text("School Admission Receipt",20,20);
+doc.text("Receipt No: "+data.receipt,20,30);
+doc.text("Student: "+data.student,20,40);
+doc.text("Fee: ₹"+data.fee,20,50);
+doc.text("Transaction ID: "+data.txn,20,60);
+
+doc.save(data.receipt+".pdf");
+}
+
+showStep(1);
+
 </script>
 
 </body>
